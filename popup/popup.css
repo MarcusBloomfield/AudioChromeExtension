@@ -1,0 +1,169 @@
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --background-color: #f0f0f0;
+    --text-color: #333;
+    --border-color: #ccc;
+    --input-background: #fff;
+    --tab-active-bg: #007bff;
+    --tab-active-text: #fff;
+    --tab-inactive-bg: #e9ecef;
+    --tab-inactive-text: #495057;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    width: 350px;
+    margin: 0;
+    padding: 15px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 20px;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+h2 {
+    font-size: 16px;
+    color: var(--secondary-color);
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 5px;
+}
+
+.tab-navigation {
+    display: flex;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.tab-button {
+    flex-grow: 1;
+    padding: 10px;
+    cursor: pointer;
+    border: none;
+    background-color: var(--tab-inactive-bg);
+    color: var(--tab-inactive-text);
+    font-size: 13px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.tab-button:not(:last-child) {
+    border-right: 1px solid var(--border-color);
+}
+
+.tab-button.active {
+    background-color: var(--tab-active-bg);
+    color: var(--tab-active-text);
+    font-weight: bold;
+}
+
+.tab-button:hover:not(.active) {
+    background-color: #d6d8db;
+}
+
+.tab-content {
+    display: none;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--input-background);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+}
+
+.control-group input[type="text"],
+.control-group select {
+    width: calc(100% - 22px);
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.control-group button {
+    padding: 8px 12px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s ease;
+    margin-right: 5px;
+}
+
+.control-group button:hover {
+    background-color: #0056b3;
+}
+
+.control-group button#delete-preset {
+    background-color: var(--secondary-color);
+}
+
+.control-group button#delete-preset:hover {
+    background-color: #545b62;
+}
+
+.visualization-area {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--input-background);
+}
+
+.visualization-area canvas {
+    display: block;
+    width: 100%;
+    background-color: #2c2c2c;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.visualization-area canvas#level-meter-canvas {
+    height: 20px;
+}
+
+.visualization-area canvas#waveform-canvas {
+    height: 80px;
+}
+
+label span {
+    font-weight: normal;
+    color: var(--primary-color);
+} 

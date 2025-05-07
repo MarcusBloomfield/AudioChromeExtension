@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background circle -->
+    <circle cx="64" cy="64" r="60" fill="#2196F3"/>
+    
+    <!-- Audio waveform -->
+    <path d="M30 64 L40 44 L50 84 L60 24 L70 104 L80 34 L90 74 L98 64" 
+          stroke="white" 
+          stroke-width="8" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Speaker cone -->
+    <path d="M20 64 L40 44 L40 84 Z" 
+          fill="white"/>
+</svg> 

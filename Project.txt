@@ -1,0 +1,94 @@
+# Audio Chrome Extension Project
+
+## Project Overview
+- Chrome extension for managing browser audio
+- Features: Compressor, Limiter, and Amplifier
+- Uses Web Audio API for audio processing
+- Processes audio from any audio/video element on the page
+
+## Technical Stack
+- HTML/CSS/JavaScript
+- Web Audio API
+- Chrome Extension APIs
+
+## Project Structure
+- manifest.json: Extension configuration
+- popup/: UI components
+  - popup.html: Main UI with sliders and controls
+  - popup.css: Modern, responsive styling
+  - popup.js: UI logic and visualization
+- background/: Background scripts
+  - background.js: Audio processing logic using Web Audio API
+- content/: Content scripts
+  - content.js: Page interaction and audio element detection
+- lib/: Audio processing libraries
+  - audioProcessor.js: Core audio processing logic
+- icons/: Extension icons
+  - icon.svg: Source SVG icon
+  - generate_icons.html: Icon generator tool
+  - icon16.png: 16x16 icon
+  - icon48.png: 48x48 icon
+  - icon128.png: 128x128 icon
+
+## Features Implemented
+- Audio Compression with adjustable:
+  - Threshold (-60 to 0 dB)
+  - Ratio (1:1 to 20:1)
+  - Attack (0 to 1000 ms)
+  - Release (0 to 1000 ms)
+- Audio Limiting with:
+  - Adjustable threshold (-60 to 0 dB)
+  - Fast attack and release for peak limiting
+- Audio Amplification with:
+  - Adjustable gain (-20 to +20 dB)
+- Real-time audio visualization:
+  - Waveform display
+  - Level meter
+- Preset management:
+  - Save current settings
+  - Load saved presets
+  - Reset to default values
+- Automatic audio element detection:
+  - Works with both audio and video elements
+  - Handles dynamically added elements
+  - Processes audio in real-time
+
+## Development Notes
+- Using Web Audio API for audio processing
+- Implementing real-time audio analysis
+- Following Chrome extension best practices
+- Ensuring cross-browser compatibility
+- Using MutationObserver for dynamic audio element detection
+- Implementing proper error handling and user feedback
+- Custom icon design with audio waveform visualization
+- Processing audio from browser media elements instead of microphone
+
+## Technical Details
+- Audio Processing Chain:
+  1. MediaElementSource (from audio/video element)
+  2. Compressor
+  3. Limiter
+  4. Gain Node
+  5. Analyser
+  6. Destination
+
+## TODO
+- [x] Set up basic extension structure (manifest.json created)
+- [x] Implement audio processing core (AudioProcessor class in lib/audioProcessor.js created)
+- [x] Create user interface
+- [] Add audio visualization
+- [] Implement settings storage
+- [] Add error handling
+- [] Create extension icons
+- [ ] Add unit tests
+- [ ] Create documentation
+- [ ] Add keyboard shortcuts
+- [ ] Implement audio device selection
+- [ ] Add more visualization options
+- [ ] Implement A/B testing for presets
+
+## Development Log
+- Created manifest.json with basic extension configuration.
+- Created placeholder files: lib/audioProcessor.js, popup/popup.html, popup/popup.css, popup/popup.js, background/background.js, content/content.js.
+- Implemented AudioProcessor class in lib/audioProcessor.js with Web Audio API chain (Compressor, Limiter, Gain, Analyser) and parameter update methods.
+- Added README.md, .gitignore, and MIT LICENSE files to the project.

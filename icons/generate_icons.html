@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+</head>
+<body>
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+    <script>
+        function drawIcon(canvas) {
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+            
+            // Draw background circle
+            ctx.fillStyle = '#2196F3';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw waveform
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size/16;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            
+            const points = [
+                [0.23, 0.5], [0.31, 0.34], [0.39, 0.66], [0.47, 0.19],
+                [0.55, 0.81], [0.63, 0.27], [0.71, 0.58], [0.77, 0.5]
+            ];
+            
+            points.forEach((point, i) => {
+                const x = point[0] * size;
+                const y = point[1] * size;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+            
+            // Draw speaker cone
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.moveTo(size * 0.16, size * 0.5);
+            ctx.lineTo(size * 0.31, size * 0.34);
+            ctx.lineTo(size * 0.31, size * 0.66);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Draw icons at different sizes
+        drawIcon(document.getElementById('canvas16'));
+        drawIcon(document.getElementById('canvas48'));
+        drawIcon(document.getElementById('canvas128'));
+
+        // Instructions for saving
+        console.log('To save the icons:');
+        console.log('1. Right-click each canvas');
+        console.log('2. Select "Save image as..."');
+        console.log('3. Save as icon16.png, icon48.png, and icon128.png respectively');
+    </script>
+</body>
+</html> 
