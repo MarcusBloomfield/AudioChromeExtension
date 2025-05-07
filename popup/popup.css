@@ -1,14 +1,13 @@
 :root {
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
     --background-color: #f0f0f0;
     --text-color: #333;
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
     --border-color: #ccc;
     --input-background: #fff;
-    --tab-active-bg: #007bff;
-    --tab-active-text: #fff;
-    --tab-inactive-bg: #e9ecef;
-    --tab-inactive-text: #495057;
+    --section-background: #ffffff; /* Background for each control section */
+    --danger-color: #007bff; /* For reset button or destructive actions */
+    --danger-hover-color: #9ac9fc;
 }
 
 body {
@@ -24,6 +23,7 @@ body {
 .container {
     display: flex;
     flex-direction: column;
+    gap: 15px; /* Adds space between control sections */
 }
 
 h1 {
@@ -31,64 +31,39 @@ h1 {
     color: var(--primary-color);
     font-size: 20px;
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 5px; /* Reduced margin as sections will have their own */
 }
 
 h2 {
     font-size: 16px;
     color: var(--secondary-color);
-    margin-top: 10px;
+    margin-top: 0; /* Remove top margin as section padding will handle it */
     margin-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 5px;
 }
 
-.tab-navigation {
-    display: flex;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.tab-button {
-    flex-grow: 1;
-    padding: 10px;
-    cursor: pointer;
-    border: none;
-    background-color: var(--tab-inactive-bg);
-    color: var(--tab-inactive-text);
-    font-size: 13px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.tab-button:not(:last-child) {
-    border-right: 1px solid var(--border-color);
-}
-
-.tab-button.active {
-    background-color: var(--tab-active-bg);
-    color: var(--tab-active-text);
-    font-weight: bold;
-}
-
-.tab-button:hover:not(.active) {
-    background-color: #d6d8db;
-}
-
-.tab-content {
-    display: none;
-    padding: 10px;
+.control-section {
+    padding: 15px;
     border: 1px solid var(--border-color);
     border-radius: 5px;
-    background-color: var(--input-background);
+    background-color: var(--section-background);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.tab-content.active {
-    display: block;
+.info-text {
+    font-size: 12px;
+    color: var(--secondary-color);
+    margin-top: -5px;
+    margin-bottom: 10px;
 }
 
 .control-group {
     margin-bottom: 15px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0; /* Remove margin from last control group in a section */
 }
 
 .control-group label {
@@ -101,11 +76,12 @@ h2 {
 .control-group input[type="range"] {
     width: 100%;
     cursor: pointer;
+    margin-top: 2px;
 }
 
 .control-group input[type="text"],
 .control-group select {
-    width: calc(100% - 22px);
+    width: calc(100% - 22px); /* Account for padding and border */
     padding: 8px 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -127,6 +103,10 @@ h2 {
     margin-right: 5px;
 }
 
+.control-group button:last-child {
+    margin-right: 0;
+}
+
 .control-group button:hover {
     background-color: #0056b3;
 }
@@ -139,12 +119,8 @@ h2 {
     background-color: #545b62;
 }
 
-.visualization-area {
-    margin-top: 15px;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    background-color: var(--input-background);
+.visualization-area h2 {
+    /* Specific h2 styling for visualization if needed, or remove if general is fine */
 }
 
 .visualization-area canvas {
@@ -155,6 +131,10 @@ h2 {
     margin-bottom: 10px;
 }
 
+.visualization-area canvas:last-child {
+    margin-bottom: 0;
+}
+
 .visualization-area canvas#level-meter-canvas {
     height: 20px;
 }
@@ -163,6 +143,30 @@ h2 {
     height: 80px;
 }
 
+/* Global Actions Section Styling */
+.global-actions {
+    padding: 10px; /* Keep padding for the section itself */
+    /* text-align: center; */ /* Removed as button will be full width */
+}
+
+.global-actions button#reset-defaults {
+    background-color: var(--danger-color);
+    color: white; /* Ensure text is readable on danger background */
+    width: 100%; /* Make button full width */
+    padding: 10px 15px; /* Adjust padding for full width */
+    margin: 0;
+    border: none; /* Explicitly remove border if any */
+    border-radius: 4px; /* Match other button/input border-radius */
+    font-size: 14px; /* Slightly larger font for a global action */
+    box-sizing: border-box; /* Ensure padding doesn't make it overflow */
+    transition: background-color 0.2s ease;
+}
+
+.global-actions button#reset-defaults:hover {
+    background-color: var(--danger-hover-color);
+}
+
+/* Slider value display */
 label span {
     font-weight: normal;
     color: var(--primary-color);

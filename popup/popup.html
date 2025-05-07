@@ -8,14 +8,8 @@
   <div class="container">
     <h1>Audio Manager</h1>
 
-    <div class="tab-navigation">
-      <button class="tab-button active" data-tab="compressor">Compressor</button>
-      <button class="tab-button" data-tab="limiter">Limiter</button>
-      <button class="tab-button" data-tab="amplifier">Amplifier</button>
-      <button class="tab-button" data-tab="presets">Presets</button>
-    </div>
-
-    <div id="compressor-tab" class="tab-content active">
+    <!-- Compressor Section -->
+    <div id="compressor-section" class="control-section">
       <h2>Compressor</h2>
       <div class="control-group">
         <label for="comp-threshold">Threshold (-60 to 0 dB): <span id="comp-threshold-value">-24</span> dB</label>
@@ -39,16 +33,18 @@
       </div>
     </div>
 
-    <div id="limiter-tab" class="tab-content">
+    <!-- Limiter Section -->
+    <div id="limiter-section" class="control-section">
       <h2>Limiter</h2>
-      <p>Note: Limiter uses a fast attack/release by design.</p>
+      <p class="info-text">Note: Limiter uses a fast attack/release by design.</p>
       <div class="control-group">
         <label for="limiter-threshold">Threshold (-60 to 0 dB): <span id="limiter-threshold-value">-3</span> dB</label>
         <input type="range" id="limiter-threshold" min="-60" max="0" value="-3" step="1">
       </div>
     </div>
 
-    <div id="amplifier-tab" class="tab-content">
+    <!-- Amplifier Section -->
+    <div id="amplifier-section" class="control-section">
       <h2>Amplifier</h2>
       <div class="control-group">
         <label for="amp-gain">Gain (-20 to +20 dB): <span id="amp-gain-value">0</span> dB</label>
@@ -56,31 +52,12 @@
       </div>
     </div>
 
-    <div id="presets-tab" class="tab-content">
-      <h2>Presets</h2>
-      <div class="control-group">
-        <input type="text" id="preset-name" placeholder="Preset name">
-        <button id="save-preset">Save Current</button>
-      </div>
-      <div class="control-group">
-        <select id="load-preset-select">
-          <option value="">-- Load Preset --</option>
-        </select>
-        <button id="load-preset">Load Selected</button>
-        <button id="delete-preset">Delete Selected</button>
-      </div>
-      <div class="control-group">
+    <!-- Global Actions Section -->
+    <div class="global-actions control-section">
         <button id="reset-defaults">Reset to Defaults</button>
-      </div>
-    </div>
-
-    <div class="visualization-area">
-      <h2>Visualization</h2>
-      <canvas id="waveform-canvas" width="280" height="100"></canvas>
-      <canvas id="level-meter-canvas" width="280" height="20"></canvas>
     </div>
 
   </div>
-  <script src="popup.js"></script>
+  <script src="js/popup.js"></script>
 </body>
 </html> 
