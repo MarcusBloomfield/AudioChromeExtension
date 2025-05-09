@@ -1,160 +1,135 @@
 // background/background.js
 console.log("background.js loaded and running");
 
-const DEFAULT_SETTINGS = Object.freeze({
-  compressor: {
-    threshold: -24, // dB
-    ratio: 12,      // unitless
-    attack: 0.02,   // seconds (20ms)
-    release: 0.25,  // seconds (250ms)
-    knee: 30        // dB
-  },
-  limiter: {
-    threshold: -3,  // dB
-    attack: 0.001,  // seconds (1ms)
-    release: 0.05,  // seconds (50ms)
-    ratio: 20,      // unitless (high for limiting)
-    knee: 0         // dB (hard knee for limiting)
-  },
-  amplifier: {
-    gain: 0         // dB
-  }
+const DEFAULT_AUDIO_SETTINGS = Object.freeze({
+  compressor: { threshold: -24, ratio: 12, attack: 0.02, release: 0.25, knee: 30 },
+  limiter: { threshold: -3, attack: 0.001, release: 0.05, ratio: 20, knee: 0 },
+  amplifier: { gain: 0 }
 });
 
-let currentSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); // Deep copy for mutable current settings
+const DEFAULT_EXTENSION_STATE = Object.freeze({
+  isExtensionEnabled: true
+});
+
+let currentAudioSettings = JSON.parse(JSON.stringify(DEFAULT_AUDIO_SETTINGS));
+let currentExtensionState = JSON.parse(JSON.stringify(DEFAULT_EXTENSION_STATE));
 
 let activeTabId = null;
 let audioProcessorPresentInActiveTab = false;
 
 // Load settings from storage on startup
-chrome.storage.local.get('audioSettings', (data) => {
-  if (data.audioSettings) {
-    // Basic validation/merge to ensure all keys from DEFAULT_SETTINGS are present
-    // This prevents errors if stored settings are old/incomplete.
-    let loadedSettings = data.audioSettings;
-    for (const type in DEFAULT_SETTINGS) {
-        if (!loadedSettings[type]) loadedSettings[type] = {};
-        for (const param in DEFAULT_SETTINGS[type]) {
-            if (loadedSettings[type][param] === undefined) {
-                loadedSettings[type][param] = DEFAULT_SETTINGS[type][param];
-            }
+Promise.all([
+  chrome.storage.local.get('audioSettings').then(data => {
+    if (data.audioSettings) {
+      let loaded = data.audioSettings;
+      for (const type in DEFAULT_AUDIO_SETTINGS) {
+        if (!loaded[type]) loaded[type] = {};
+        for (const param in DEFAULT_AUDIO_SETTINGS[type]) {
+          if (loaded[type][param] === undefined) loaded[type][param] = DEFAULT_AUDIO_SETTINGS[type][param];
         }
+      }
+      currentAudioSettings = loaded;
+      console.log("Loaded audio settings:", currentAudioSettings);
+    } else {
+      chrome.storage.local.set({ audioSettings: DEFAULT_AUDIO_SETTINGS });
     }
-    currentSettings = loadedSettings;
-    console.log("Loaded settings from storage:", currentSettings);
-  } else {
-    // If nothing in storage, ensure currentSettings (already defaulted) is saved.
-    chrome.storage.local.set({ audioSettings: currentSettings }, () => {
-        console.log("Initialized storage with default settings as none were found.");
-    });
-  }
-});
+  }),
+  chrome.storage.local.get('extensionGlobalState').then(data => {
+    if (data.extensionGlobalState && data.extensionGlobalState.isExtensionEnabled !== undefined) {
+      currentExtensionState = data.extensionGlobalState;
+      console.log("Loaded extension state:", currentExtensionState);
+    } else {
+      chrome.storage.local.set({ extensionGlobalState: DEFAULT_EXTENSION_STATE });
+    }
+  })
+]).catch(error => console.error("Error loading settings from storage:", error));
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Audio Manager extension installed.");
-  // Ensure default settings are in storage if not already there (covered by the load logic above too)
-  chrome.storage.local.get('audioSettings', (data) => {
-    if (!data.audioSettings) {
-      chrome.storage.local.set({ audioSettings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)) }, () => {
-        console.log("Default settings saved to storage on install.");
-      });
-    }
-  });
+  chrome.storage.local.set({ audioSettings: DEFAULT_AUDIO_SETTINGS });
+  chrome.storage.local.set({ extensionGlobalState: DEFAULT_EXTENSION_STATE });
 });
 
-function applyAndStoreSettings(newSettings) {
-  currentSettings = newSettings;
-  chrome.storage.local.set({ audioSettings: currentSettings }, () => {
-    console.log("Settings saved to storage:", currentSettings);
-  });
-  if (activeTabId && audioProcessorPresentInActiveTab) {
-    chrome.tabs.sendMessage(activeTabId, {
-      action: 'applySettings',
-      settings: currentSettings
-    }).catch(error => console.warn("Error sending 'applySettings' to content script:", error.message));
-    console.log("Relayed 'applySettings' to active tab:", activeTabId);
-  } else {
-    console.log("No active tab/processor, settings stored but not relayed immediately.");
+function applyAndStoreAudioSettings(newSettings) {
+  currentAudioSettings = newSettings;
+  chrome.storage.local.set({ audioSettings: currentAudioSettings });
+  if (activeTabId && audioProcessorPresentInActiveTab && currentExtensionState.isExtensionEnabled) {
+    chrome.tabs.sendMessage(activeTabId, { 
+        action: 'applyAudioSettings',
+        settings: currentAudioSettings 
+    }).catch(e => console.warn("Error sending 'applyAudioSettings' to content script:", e.message));
   }
 }
 
-// Listen for messages from popup or content scripts
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Background script received message:", message, "from sender:", sender);
+function broadcastExtensionState() {
+  if (activeTabId && audioProcessorPresentInActiveTab) {
+    chrome.tabs.sendMessage(activeTabId, {
+        action: 'setAudioEffectsEnabled',
+        enable: currentExtensionState.isExtensionEnabled 
+    }).catch(e => console.warn("Error broadcasting setAudioEffectsEnabled to content script:", e.message));
+  } else {
+    console.log("No active/ready tab to broadcast extension state to.");
+  }
+  chrome.runtime.sendMessage({ action: 'extensionStateChanged', newState: currentExtensionState })
+    .catch(e => {});
+}
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("BG RCV:", message);
   switch (message.action) {
     case 'getSettings':
-      sendResponse({ status: "success", settings: currentSettings });
-      console.log("Sent current settings to popup:", currentSettings);
+      sendResponse({ status: "success", audioSettings: currentAudioSettings, extensionState: currentExtensionState });
       break;
-
     case 'updateSetting':
       if (message.settingType && message.parameter !== undefined && message.value !== undefined) {
-        if (currentSettings[message.settingType]) {
-          let newSettings = JSON.parse(JSON.stringify(currentSettings)); // Deep copy
-          newSettings[message.settingType][message.parameter] = message.value;
-          applyAndStoreSettings(newSettings);
-          console.log(`Updated setting: ${message.settingType}.${message.parameter} = ${message.value}`);
-          sendResponse({ status: "success", settings: currentSettings }); // Send back the updated settings
-        } else {
-          console.error("Invalid settingType in updateSetting message:", message.settingType);
-          sendResponse({ status: "error", message: "Invalid setting type" });
-        }
-      } else {
-        console.error("Invalid updateSetting message structure:", message);
-        sendResponse({ status: "error", message: "Invalid message structure for updateSetting" });
-      }
+        let newAudioSettings = JSON.parse(JSON.stringify(currentAudioSettings));
+        if (!newAudioSettings[message.settingType]) newAudioSettings[message.settingType] = {};
+        newAudioSettings[message.settingType][message.parameter] = message.value;
+        applyAndStoreAudioSettings(newAudioSettings);
+        sendResponse({ status: "success", audioSettings: currentAudioSettings });
+      } else { sendResponse({ status: "error", message: "Invalid updateSetting structure" }); }
       break;
-
     case 'resetToDefaults':
-      console.log("Resetting settings to defaults.");
-      applyAndStoreSettings(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)));
-      sendResponse({ status: "success", settings: currentSettings }); // currentSettings is now defaults
-      console.log("Settings reset to defaults and applied.");
+      applyAndStoreAudioSettings(JSON.parse(JSON.stringify(DEFAULT_AUDIO_SETTINGS)));
+      sendResponse({ status: "success", audioSettings: currentAudioSettings });
       break;
-
+    case 'setExtensionEnabledState':
+      if (message.isEnabled !== undefined) {
+        currentExtensionState.isExtensionEnabled = message.isEnabled;
+        chrome.storage.local.set({ extensionGlobalState: currentExtensionState }, () => {
+          console.log("Extension enabled state saved:", currentExtensionState.isExtensionEnabled);
+          broadcastExtensionState(); 
+          sendResponse({ status: "success", newState: currentExtensionState });
+        });
+      } else { sendResponse({ status: "error", message: "isEnabled missing" }); }
+      return true;
     case 'audioProcessorReady':
       activeTabId = sender.tab.id;
       audioProcessorPresentInActiveTab = true;
-      console.log(`Audio processor reported ready in tab: ${activeTabId}. Sending current settings.`);
-      chrome.tabs.sendMessage(activeTabId, {
-        action: 'applySettings',
-        settings: currentSettings
-      }).catch(error => console.warn("Error sending initial 'applySettings' to content script:", error.message));
-      sendResponse({ status: "success", message: "Background noted audio processor ready." });
+      console.log(`Audio processor ready in tab: ${activeTabId}. Extension enabled: ${currentExtensionState.isExtensionEnabled}`);
+      chrome.tabs.sendMessage(activeTabId, { 
+          action: 'initializeAudioProcessorState', 
+          audioSettings: currentAudioSettings, 
+          effectsEnabled: currentExtensionState.isExtensionEnabled 
+      }).catch(e => console.warn("Error sending initial state to content script:", e.message));
+      sendResponse({ status: "success" });
       break;
-
     case 'audioProcessorRemoved':
-      if (sender.tab.id === activeTabId) {
-        activeTabId = null;
-        audioProcessorPresentInActiveTab = false;
-        console.log(`Audio processor removed or tab closed: ${sender.tab.id}. Active tab cleared.`);
-      }
-      sendResponse({ status: "success", message: "Background noted audio processor removed." });
+      if (sender.tab.id === activeTabId) { activeTabId = null; audioProcessorPresentInActiveTab = false; }
+      sendResponse({ status: "success" });
       break;
-
     default:
-      console.warn("Unknown message action received:", message.action);
       sendResponse({ status: "error", message: `Unknown action: ${message.action}` });
       break;
   }
-  return true; // Indicates that sendResponse will be called asynchronously for some cases
+  return true;
 });
 
-// Handle tab closures or updates to clear activeTabId if necessary
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  if (tabId === activeTabId) {
-    activeTabId = null;
-    audioProcessorPresentInActiveTab = false;
-    console.log(`Active tab ${tabId} was removed. Active tab cleared.`);
-  }
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (tabId === activeTabId) { activeTabId = null; audioProcessorPresentInActiveTab = false; }
 });
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tabId === activeTabId && (changeInfo.status === 'loading' || changeInfo.url)) {
-      console.log(`Active tab ${tabId} updated (status: ${changeInfo.status}, url changed: ${!!changeInfo.url}). Content script state will be reset.`);
-      audioProcessorPresentInActiveTab = false; 
-  }
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (tabId === activeTabId && changeInfo.status === 'loading') { audioProcessorPresentInActiveTab = false; }
 });
 
 console.log("Background script event listeners set up.");

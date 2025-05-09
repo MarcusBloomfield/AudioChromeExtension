@@ -1,0 +1,104 @@
+/* popup/popup.css */
+// ... existing :root and body styles ...
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+// ... existing h1, h2 styles ...
+
+.control-section {
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--section-background);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: opacity 0.3s ease, filter 0.3s ease; /* For disabling effect */
+}
+
+.control-section.disabled {
+    opacity: 0.6;
+    pointer-events: none; /* Prevent interaction with controls inside */
+    filter: grayscale(50%);
+}
+
+/* Global Toggle Section specific styling */
+.global-toggle-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px; /* Consistent padding */
+}
+
+.global-toggle-section.disabled { /* The toggle itself should not be disabled by this class */
+    opacity: 1;
+    pointer-events: auto;
+    filter: none;
+}
+
+.toggle-switch-label {
+    font-weight: 500;
+    font-size: 14px; /* Slightly larger for global toggle label */
+    color: var(--text-color);
+}
+
+/* Toggle Switch CSS */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px; /* Width of the switch */
+  height: 24px; /* Height of the switch */
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc; /* Default background of slider (off state) */
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px; /* Height of the knob */
+  width: 18px;  /* Width of the knob */
+  left: 3px;    /* Position from left for knob */
+  bottom: 3px;  /* Position from bottom for knob */
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-color); /* Color when ON */
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px); /* How far the knob moves */
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 24px; /* Should match height for pill shape */
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+// ... existing .info-text, .control-group, .global-actions, label span styles ... 
