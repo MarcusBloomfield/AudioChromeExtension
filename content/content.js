@@ -9,6 +9,10 @@ let globallyProcessedElements = new WeakSet();
 let isContentScriptGloballyEnabled = true; // Renamed from isContentScriptProcessingEnabled
                                        // Reflects the master toggle, not the audio effects bypass state
 
+let audioProcessor = null;
+let processingEnabled = false;
+let decibelUpdateInterval = null;
+
 // Function to initialize or re-initialize audio processing on a given element
 async function setupAudioProcessing(element) {
   if (!isContentScriptGloballyEnabled) { // Check master toggle
@@ -39,6 +43,7 @@ async function setupAudioProcessing(element) {
             .catch(e => console.warn("Error sending audioProcessorRemoved (old replaced):", e.message));
     }
     currentAudioProcessor = null;
+    stopDecibelUpdates(); // Stop decibel updates for old processor
   }
 
   // CRITICAL CHECK: Has this specific DOM element ever been successfully used for createMediaElementSource?
@@ -68,6 +73,9 @@ async function setupAudioProcessing(element) {
     element.addEventListener('emptied', handleElementEvent, { once: true });
     element.addEventListener('error', handleElementEvent, { once: true });
     element.addEventListener('abort', handleElementEvent, { once: true });
+    
+    // Start sending decibel updates when processor is ready
+    startDecibelUpdates();
 
   } catch (error) {
     console.error("Error initializing AudioProcessor for element:", element, error);
@@ -91,6 +99,7 @@ async function disconnectCurrentProcessor() {
             .catch(e => console.warn("Error sending audioProcessorRemoved (disconnect explicit):", e.message));
         currentAudioProcessor = null;
         currentProcessedElement = null; // Also clear the element being processed
+        stopDecibelUpdates(); // Stop decibel updates when disconnecting
     }
 }
 
@@ -188,6 +197,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // This is important if the page had no audio element when toggle happened.
       isContentScriptGloballyEnabled = message.enable; 
       break;
+    case 'toggleProcessing':
+      toggleAudioProcessing(message.enabled);
+      sendResponse({ success: true });
+      break;
+    case 'updateSettings':
+      updateSettings(message.settings);
+      sendResponse({ success: true });
+      break;
+    case 'checkStatus':
+      sendResponse({ 
+        processing: processingEnabled,
+        audioAvailable: !!document.querySelector('audio, video')
+      });
+      break;
     default:
       sendResponse({ status: "error", message: "Unknown action for content script." });
       break;
@@ -247,3 +270,53 @@ document.addEventListener('play', (event) => {
 }, true); // Use capture phase to catch events early
 
 console.log("Content script initialized with audio detection and message listener.");
+
+// Start sending decibel updates
+function startDecibelUpdates() {
+    if (decibelUpdateInterval) {
+        clearInterval(decibelUpdateInterval);
+    }
+    
+    decibelUpdateInterval = setInterval(() => {
+        if (currentAudioProcessor && currentAudioProcessor.isInitialized && isContentScriptGloballyEnabled) {
+            const dbLevel = currentAudioProcessor.getDecibelLevel();
+            chrome.runtime.sendMessage({
+                action: 'decibelUpdate',
+                value: dbLevel
+            }).catch(e => console.warn("Error sending decibelUpdate:", e.message));
+        }
+    }, 100); // Send updates 10 times per second
+}
+
+// Stop sending decibel updates
+function stopDecibelUpdates() {
+    if (decibelUpdateInterval) {
+        clearInterval(decibelUpdateInterval);
+        decibelUpdateInterval = null;
+    }
+}
+
+// Function to toggle audio processing
+async function toggleAudioProcessing(enabled) {
+    console.log('Toggle audio processing:', enabled);
+    isContentScriptGloballyEnabled = enabled;
+    
+    if (enabled) {
+        findAndProcessAudioSources();
+        startDecibelUpdates();
+    } else {
+        await disconnectCurrentProcessor();
+        stopDecibelUpdates();
+    }
+}
+
+// Function to update settings
+function updateSettings(settings) {
+    if (currentAudioProcessor && currentAudioProcessor.isInitialized) {
+        currentAudioProcessor.updateAllNodeSettings(
+            settings.compressor, 
+            settings.limiter, 
+            settings.amplifier
+        );
+    }
+}

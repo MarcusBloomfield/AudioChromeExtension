@@ -89,6 +89,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ status: "success", audioSettings: currentAudioSettings });
       } else { sendResponse({ status: "error", message: "Invalid updateSetting structure" }); }
       break;
+    case 'decibelUpdate':
+      // Relay the decibel update to any popup that might be listening
+      chrome.runtime.sendMessage({ 
+        action: 'decibelUpdate', 
+        value: message.value 
+      }).catch(e => {});
+      sendResponse({ status: "success" });
+      break;
     case 'resetToDefaults':
       applyAndStoreAudioSettings(JSON.parse(JSON.stringify(DEFAULT_AUDIO_SETTINGS)));
       sendResponse({ status: "success", audioSettings: currentAudioSettings });

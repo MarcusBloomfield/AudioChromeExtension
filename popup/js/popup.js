@@ -24,7 +24,34 @@ const controlsConfig = [
   { id: 'amp-gain', valueId: 'amp-gain-value', settingType: 'amplifier', parameter: 'gain', unit: ' dB', preprocess: parseFloat }
 ];
 
-const audioControlSections = ['compressor-section', 'limiter-section', 'amplifier-section'];
+const audioControlSections = ['meter-section', 'compressor-section', 'limiter-section', 'amplifier-section'];
+
+// Helper function to update the decibel meter
+function updateDecibelMeter(dbLevel) {
+  const dbMeterFill = document.getElementById('db-meter-fill');
+  const dbValueDisplay = document.getElementById('db-value-display');
+  
+  if (!dbMeterFill || !dbValueDisplay) return;
+  
+  // Convert dB level to a percentage for the meter
+  // Map from minDb to maxDb to 0-100%
+  const minDb = -80; // Match the analyserNode.minDecibels
+  const maxDb = 0;   // Match the analyserNode.maxDecibels
+  let percent = 100 - (((dbLevel - maxDb) / (minDb - maxDb)) * 100);
+  
+  // Clamp between 0 and 100
+  percent = Math.max(0, Math.min(100, percent));
+  
+  // Update the meter fill
+  dbMeterFill.style.width = (100 - percent) + '%';
+  
+  // Update the text display
+  if (dbLevel <= minDb) {
+    dbValueDisplay.textContent = '-∞ dB';
+  } else {
+    dbValueDisplay.textContent = dbLevel.toFixed(1) + ' dB';
+  }
+}
 
 function updateUiControls(audioSettings) {
   console.log("Updating UI audio controls with settings:", audioSettings);
@@ -135,8 +162,13 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log("Popup received extensionStateChanged:", message.newState);
         masterEnableToggle.checked = message.newState.isExtensionEnabled;
         setUiEnabledState(message.newState.isExtensionEnabled);
+    } else if (message.action === 'decibelUpdate') {
+        updateDecibelMeter(message.value);
     }
   });
+
+  // Initialize decibel meter at lowest value
+  updateDecibelMeter(-100);
 
   console.log("Popup UI initialized.");
 }); 

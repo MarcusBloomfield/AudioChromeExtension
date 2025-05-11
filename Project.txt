@@ -39,6 +39,7 @@
 - **Dynamic Element Detection**: `content.js` detects audio/video elements, including those added dynamically, and attempts to manage a single `AudioProcessor` instance.
 - **Basic Project Documentation**: `README.md`, `LICENSE` (MIT), and `privacy.md` created.
 - **Master Enable/Disable Toggle**: A global toggle in the popup UI allows enabling/disabling all audio processing. State is persisted and respected by content scripts.
+- **Real-time Decibel Meter**: Audio levels are displayed in real-time on the popup UI, allowing users to visualize audio levels.
 
 ## Development Notes
 - Using Web Audio API for audio processing, managed by the `AudioProcessor` class in `lib/audioProcessor.js`.
@@ -58,7 +59,8 @@
 - [x] Create user interface (Single-page layout with core controls implemented)
 - [x] Implement core settings storage (`chrome.storage.local` for current effect parameters)
 - [] Implement Preset Management (Save, Load, Delete named sets of settings)
-- [] Add audio visualization (Waveform and/or Level Meter using `AnalyserNode` data)
+- [x] Add basic audio visualization (Decibel meter implemented)
+- [] Add advanced audio visualization (Waveform and/or FFT spectrum using `AnalyserNode` data)
 - [] Further enhance audio element detection and switching logic in `content.js` to reliably handle complex pages and user interactions (BUG related to InvalidStateError is now handled, but UX implications of stopping processing on reused elements should be considered).
 - [] Add error handling and user feedback mechanisms more broadly across the extension.
 - [] Create final extension icons.
@@ -85,3 +87,5 @@
 - Implemented a more robust fix for `InvalidStateError`: `content.js` now tracks `HTMLMediaElement`s that have had `createMediaElementSource` successfully called once (using a `WeakSet`). It will not attempt to re-initialize `MediaElementSourceNode` on the same DOM element if it has been processed before, thus avoiding the error when `src` attributes change on reused elements. This means audio processing will stop for a specific media player tag if the site reuses it for a new source, until a genuinely new media element is used by the page.
 - Added Master Enable/Disable toggle: UI in popup, state management in background.js (persisted in storage), and content.js now respects this global state to start/stop audio detection and processing.
 - Refined Master Enable/Disable: AudioProcessor now supports bypassing effects (setting nodes to neutral values) instead of full disconnection, allowing audio to continue playing while effects are toggled off. Content.js and background.js updated to use this new bypass mechanism.
+- Implemented real-time decibel meter: Added `getDecibelLevel()` method to AudioProcessor, created communication chain from content script to popup, and designed visual meter UI. This allows users to see audio levels in real-time as sound plays through the browser.
+- Improved decibel meter implementation: Replaced manual RMS-to-dB calculation with Web Audio API's native `getFloatFrequencyData()`, which directly provides frequency data in dBFS format. This leverages the browser's built-in audio analysis capabilities and provides more accurate readings with smoother response.
